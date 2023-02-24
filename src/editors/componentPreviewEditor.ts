@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getNonce } from './utils';
+import { getNonce } from '../utils';
 
 export class ComponentPreviewEditorProvider implements vscode.CustomTextEditorProvider {
 
@@ -44,8 +44,7 @@ export class ComponentPreviewEditorProvider implements vscode.CustomTextEditorPr
 	}
 
     private _getHtmlForWebview(webview: vscode.Webview): string {
-		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(
-			this.context.extensionUri, 'media', 'editor.js'));
+		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'src', 'editors', 'js', 'editor.js'));
 
 		const nonce = getNonce();
 

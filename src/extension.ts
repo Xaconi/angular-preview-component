@@ -2,7 +2,7 @@
 import * as vscode from 'vscode';
 
 // Editor
-import { ComponentPreviewEditorProvider } from './componentPreviewEditor';
+import { ComponentPreviewEditorProvider } from './editors/componentPreviewEditor';
 
 export function activate(context: vscode.ExtensionContext) {
 
