@@ -5,7 +5,6 @@ export class ComponentPreviewEditorProvider implements vscode.CustomTextEditorPr
 
     // Data
     private static readonly viewType = 'angularpreview.componentPreview';
-	private static readonly message = 'HELLO WORLD';
 
     constructor(
 		private readonly context: vscode.ExtensionContext
@@ -21,7 +20,8 @@ export class ComponentPreviewEditorProvider implements vscode.CustomTextEditorPr
 		webviewPanel.webview.options = {
 			enableScripts: true,
 		};
-		webviewPanel.webview.html = this._getHtmlForWebview(webviewPanel.webview);
+		const documentName:string = document.uri.path.split("/").at(-1)!;
+		webviewPanel.webview.html = this._getHtmlForWebview(documentName, webviewPanel.webview);
 
 		function updateWebview() {
 			webviewPanel.webview.postMessage({
@@ -43,9 +43,8 @@ export class ComponentPreviewEditorProvider implements vscode.CustomTextEditorPr
 		updateWebview();
 	}
 
-    private _getHtmlForWebview(webview: vscode.Webview): string {
+    private _getHtmlForWebview(documentName: string, webview: vscode.Webview): string {
 		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'src', 'editors', 'js', 'editor.js'));
-
 		const nonce = getNonce();
 
 		return `
@@ -58,7 +57,7 @@ export class ComponentPreviewEditorProvider implements vscode.CustomTextEditorPr
 				<title>Angular Preview Component</title>
 			</head>
 			<body>
-				<p><strong>${ComponentPreviewEditorProvider.message}</strong></p>
+				<p><strong>${documentName}</strong></p>
 
 				<script nonce="${nonce}" src="${scriptUri}"></script>
 			</body>
