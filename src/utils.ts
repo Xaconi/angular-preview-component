@@ -6,3 +6,19 @@ export function getNonce() {
 	}
 	return text;
 }
+
+export function infoMessage(text: string): void {
+	console.log(`🔵 AP - ${text}`);
+}
+
+export function warningMessage(text: string): void {
+	console.log(`🟡 AP - ${text}`);
+}
+
+export function errorMessage(text: string): void {
+	console.log(`🔴 AP - ${text}`);
+}
+
+export function successMessage(text: string): void {
+	console.log(`🟢 AP - ${text}`);
+}
