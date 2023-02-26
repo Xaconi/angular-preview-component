@@ -17,6 +17,16 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(angularPreviewCommand);
 	context.subscriptions.push(ComponentPreviewEditorProvider.register(context));
+
+	context.subscriptions.push(vscode.commands.registerCommand('angularpreview.initAngular', () => {
+		infoMessage('Gonna try npm start');
+		const path = context.extensionPath.split("\\").join("\\\\");
+		const terminal = vscode.window.createTerminal(`Angular Preview Terminal`);
+		terminal.sendText(`cd ${path}`);
+		terminal.sendText(`pwd`);
+		terminal.sendText(`ng build --configuration production --output-hashing none`);
+	}));
+	
 }
 
 // This method is called when your extension is deactivated

@@ -41,7 +41,7 @@
     "vscode:prepublish": "npm run compile",
     "build": "ng build --configuration production --output-hashing none && tsc -p tsconfig.extension.json",
     "compile": "ng build --configuration production --output-hashing none && tsc -p tsconfig.extension.json",
-    "watch": "ng build --configuration production --output-hashing none && tsc -watch -p tsconfig.extension.json",
+    "watch": "tsc -p tsconfig.extension.json",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js"

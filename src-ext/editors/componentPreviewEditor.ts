@@ -16,6 +16,8 @@ export class ComponentPreviewEditorProvider implements vscode.CustomTextEditorPr
 	) { }
 
     public static register(context: vscode.ExtensionContext): vscode.Disposable {
+		console.log(context.extension.extensionPath);
+
         const provider = new ComponentPreviewEditorProvider(context);
         const providerRegistration = vscode.window.registerCustomEditorProvider(ComponentPreviewEditorProvider.viewType, provider);
 		return providerRegistration;
@@ -23,16 +25,34 @@ export class ComponentPreviewEditorProvider implements vscode.CustomTextEditorPr
     
     public async resolveCustomTextEditor(document: vscode.TextDocument, webviewPanel: vscode.WebviewPanel, _token: vscode.CancellationToken): Promise<void> {
 		infoMessage('Custom Text Editor enabled');
-		warningMessage('⚒️ TODO ⚒️ - Execute NPM start')
 
 		const angularBuildFolder: string = 'out';
-
-		webviewPanel.webview.options = {
-			enableScripts: true,
-			localResourceRoots: [vscode.Uri.file(path.join(this.context.extensionPath, angularBuildFolder))]
-		};
-		const documentName:string = document.uri.path.split("/").at(-1)!;
-		webviewPanel.webview.html = this._getHtmlForWebview(webviewPanel.webview);
+		
+		const fileNameComponent = document.fileName.split('\\').at(-1)!;
+		const cssFileNameComponent = fileNameComponent.replace(".ts", ".css");
+		const htmlFileNameComponent = fileNameComponent.replace(".ts", ".html");
+		infoMessage('Copy files');
+		fs.copyFileSync(document.fileName, `${this.context.extensionPath}\\src\\component\\${fileNameComponent}`);
+		fs.copyFileSync(document.fileName.replace(".ts", ".css"), `${this.context.extensionPath}\\src\\component\\${cssFileNameComponent}`);
+		fs.copyFileSync(document.fileName.replace(".ts", ".html"), `${this.context.extensionPath}\\src\\component\\${htmlFileNameComponent}`);
+		
+		const appModuleImport: string = `import { AppComponent } from './app.component';`;
+		const appModuleComponentImport: string = `import { BotonIconComponent } from '../component/${fileNameComponent.replace('.ts', '')}';`;
+		let appModuleText: string = fs.readFileSync(`${this.context.extensionPath}\\src\\app\\app.module.ts`).toString();
+		appModuleText = appModuleText.replace(appModuleImport, `${appModuleImport}\n${appModuleComponentImport}`)
+		appModuleText = appModuleText.replace('[ AppComponent ]', '[ AppComponent, BotonIconComponent ]')
+		fs.writeFileSync(`${this.context.extensionPath}\\src\\app\\app.module.ts`, appModuleText);
+		
+		vscode.commands.executeCommand('angularpreview.initAngular').then(() => {
+			webviewPanel.webview.options = {
+				enableScripts: true,
+				localResourceRoots: [vscode.Uri.file(path.join(this.context.extensionPath, angularBuildFolder))]
+			};
+			const documentName:string = document.uri.path.split("/").at(-1)!;
+			webviewPanel.webview.html = this._getHtmlForWebview(webviewPanel.webview);
+			
+			updateWebview();
+		});
 
 		function updateWebview() {
 			webviewPanel.webview.postMessage({
@@ -50,22 +70,13 @@ export class ComponentPreviewEditorProvider implements vscode.CustomTextEditorPr
 		webviewPanel.onDidDispose(() => {
 			changeDocumentSubscription.dispose();
 		});
-
-		updateWebview();
 	}
 
     private _getHtmlForWebview(webview: vscode.Webview): string {
-		// path to dist folder
 		const appDistPath = path.join(this.context.extensionPath, 'out');
 		const appDistPathUri = vscode.Uri.file(appDistPath);
-	
-		// path as uri
 		const baseUri = webview.asWebviewUri(appDistPathUri);
-	
-		// get path to index.html file from dist folder
 		const indexPath = path.join(appDistPath, 'index.html');
-	
-		// read index file from file system
 		let indexHtml = fs.readFileSync(indexPath, { encoding: 'utf8' });
 	
 		// update the base URI tag
