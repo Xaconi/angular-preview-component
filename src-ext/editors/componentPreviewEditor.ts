@@ -1,5 +1,10 @@
+// Core
+import * as fs from 'fs';
+import * as path from 'path';
 import * as vscode from 'vscode';
-import { getNonce } from '../utils';
+
+// Utils
+import { getNonce, infoMessage, warningMessage } from '../utils';
 
 export class ComponentPreviewEditorProvider implements vscode.CustomTextEditorProvider {
 
@@ -17,11 +22,17 @@ export class ComponentPreviewEditorProvider implements vscode.CustomTextEditorPr
     }
     
     public async resolveCustomTextEditor(document: vscode.TextDocument, webviewPanel: vscode.WebviewPanel, _token: vscode.CancellationToken): Promise<void> {
+		infoMessage('Custom Text Editor enabled');
+		warningMessage('⚒️ TODO ⚒️ - Execute NPM start')
+
+		const angularBuildFolder: string = 'out';
+
 		webviewPanel.webview.options = {
 			enableScripts: true,
+			localResourceRoots: [vscode.Uri.file(path.join(this.context.extensionPath, angularBuildFolder))]
 		};
 		const documentName:string = document.uri.path.split("/").at(-1)!;
-		webviewPanel.webview.html = this._getHtmlForWebview(documentName, webviewPanel.webview);
+		webviewPanel.webview.html = this._getHtmlForWebview(webviewPanel.webview);
 
 		function updateWebview() {
 			webviewPanel.webview.postMessage({
@@ -43,24 +54,23 @@ export class ComponentPreviewEditorProvider implements vscode.CustomTextEditorPr
 		updateWebview();
 	}
 
-    private _getHtmlForWebview(documentName: string, webview: vscode.Webview): string {
-		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'src', 'editors', 'js', 'editor.js'));
-		const nonce = getNonce();
-
-		return `
-			<!DOCTYPE html>
-			<html lang="en">
-			<head>
-				<meta charset="UTF-8">
-				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src ${webview.cspSource};">
-				<meta name="viewport" content="width=device-width, initial-scale=1.0">
-				<title>Angular Preview Component</title>
-			</head>
-			<body>
-				<p><strong>${documentName}</strong></p>
-
-				<script nonce="${nonce}" src="${scriptUri}"></script>
-			</body>
-		</html>`;
+    private _getHtmlForWebview(webview: vscode.Webview): string {
+		// path to dist folder
+		const appDistPath = path.join(this.context.extensionPath, 'out');
+		const appDistPathUri = vscode.Uri.file(appDistPath);
+	
+		// path as uri
+		const baseUri = webview.asWebviewUri(appDistPathUri);
+	
+		// get path to index.html file from dist folder
+		const indexPath = path.join(appDistPath, 'index.html');
+	
+		// read index file from file system
+		let indexHtml = fs.readFileSync(indexPath, { encoding: 'utf8' });
+	
+		// update the base URI tag
+		indexHtml = indexHtml.replace('<base href="/">', `<base href="${String(baseUri)}/">`);
+	
+		return indexHtml;
 	}
 }
