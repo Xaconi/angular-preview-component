@@ -35,10 +35,26 @@
         ],
         "priority": "default"
       }
+    ],
+    "taskDefinitions": [
+        {
+            "type": "mytask"
+        }
+    ],
+    "problemMatchers": [
+        {
+            "name": "mywarnings",
+            "base": "$gcc",
+            "fileLocation": [
+                "relative",
+                "/"
+            ]
+        }
     ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
+    "build-angular": "ng build --configuration production --output-hashing none",
     "build": "ng build --configuration production --output-hashing none && tsc -p tsconfig.extension.json",
     "compile": "ng build --configuration production --output-hashing none && tsc -p tsconfig.extension.json",
     "watch": "tsc -p tsconfig.extension.json",

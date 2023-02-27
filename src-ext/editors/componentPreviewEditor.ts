@@ -4,20 +4,22 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 // Utils
-import { getNonce, infoMessage, warningMessage } from '../utils';
+import { getNonce, infoMessage, replaceLine, successMessage, warningMessage } from '../utils';
 
 export class ComponentPreviewEditorProvider implements vscode.CustomTextEditorProvider {
 
     // Data
     private static readonly viewType = 'angularpreview.componentPreview';
+	private static readonly importHook = '@APComponentImport';
+	private static readonly declarationHook = '@APComponentDeclaration';
+	private static buildTaskSuscription: vscode.EventEmitter<void>;
 
     constructor(
 		private readonly context: vscode.ExtensionContext
 	) { }
 
-    public static register(context: vscode.ExtensionContext): vscode.Disposable {
-		console.log(context.extension.extensionPath);
-
+    public static register(context: vscode.ExtensionContext, buildTaskSuscription: vscode.EventEmitter<void>): vscode.Disposable {
+		ComponentPreviewEditorProvider.buildTaskSuscription = buildTaskSuscription;
         const provider = new ComponentPreviewEditorProvider(context);
         const providerRegistration = vscode.window.registerCustomEditorProvider(ComponentPreviewEditorProvider.viewType, provider);
 		return providerRegistration;
@@ -28,6 +30,7 @@ export class ComponentPreviewEditorProvider implements vscode.CustomTextEditorPr
 
 		const angularBuildFolder: string = 'out';
 		
+		// @TODO - Create copy component files function
 		const fileNameComponent = document.fileName.split('\\').at(-1)!;
 		const cssFileNameComponent = fileNameComponent.replace(".ts", ".css");
 		const htmlFileNameComponent = fileNameComponent.replace(".ts", ".html");
@@ -36,14 +39,12 @@ export class ComponentPreviewEditorProvider implements vscode.CustomTextEditorPr
 		fs.copyFileSync(document.fileName.replace(".ts", ".css"), `${this.context.extensionPath}\\src\\component\\${cssFileNameComponent}`);
 		fs.copyFileSync(document.fileName.replace(".ts", ".html"), `${this.context.extensionPath}\\src\\component\\${htmlFileNameComponent}`);
 		
-		const appModuleImport: string = `import { AppComponent } from './app.component';`;
-		const appModuleComponentImport: string = `import { BotonIconComponent } from '../component/${fileNameComponent.replace('.ts', '')}';`;
-		let appModuleText: string = fs.readFileSync(`${this.context.extensionPath}\\src\\app\\app.module.ts`).toString();
-		appModuleText = appModuleText.replace(appModuleImport, `${appModuleImport}\n${appModuleComponentImport}`)
-		appModuleText = appModuleText.replace('[ AppComponent ]', '[ AppComponent, BotonIconComponent ]')
-		fs.writeFileSync(`${this.context.extensionPath}\\src\\app\\app.module.ts`, appModuleText);
+		this._updateAppModuleFile(document);
 		
-		vscode.commands.executeCommand('angularpreview.initAngular').then(() => {
+		await vscode.commands.executeCommand('angularpreview.initAngular');
+
+		ComponentPreviewEditorProvider.buildTaskSuscription.event(() => {
+			this._resetAppModuleFile(document);
 			webviewPanel.webview.options = {
 				enableScripts: true,
 				localResourceRoots: [vscode.Uri.file(path.join(this.context.extensionPath, angularBuildFolder))]
@@ -52,6 +53,8 @@ export class ComponentPreviewEditorProvider implements vscode.CustomTextEditorPr
 			webviewPanel.webview.html = this._getHtmlForWebview(webviewPanel.webview);
 			
 			updateWebview();
+			
+			successMessage("BUILD TASK OK");
 		});
 
 		function updateWebview() {
@@ -77,11 +80,31 @@ export class ComponentPreviewEditorProvider implements vscode.CustomTextEditorPr
 		const appDistPathUri = vscode.Uri.file(appDistPath);
 		const baseUri = webview.asWebviewUri(appDistPathUri);
 		const indexPath = path.join(appDistPath, 'index.html');
+
 		let indexHtml = fs.readFileSync(indexPath, { encoding: 'utf8' });
-	
-		// update the base URI tag
 		indexHtml = indexHtml.replace('<base href="/">', `<base href="${String(baseUri)}/">`);
 	
 		return indexHtml;
+	}
+
+	private _updateAppModuleFile(document: vscode.TextDocument): void {
+		const fileNameComponent = document.fileName.split('\\').at(-1)!.replace('.ts', '');
+
+		let appModuleText: string = fs.readFileSync(`${this.context.extensionPath}\\src\\app\\app.module.ts`).toString();
+
+		// @TODO - Dynamic component class name
+		const appModuleComponentImport: string = `import { BotonIconComponent } from '../component/${fileNameComponent.replace('.ts', '')}';`;
+		appModuleText = replaceLine(appModuleText, ComponentPreviewEditorProvider.importHook, `/* @APComponentImport */ ${appModuleComponentImport}`)
+		appModuleText = replaceLine(appModuleText, ComponentPreviewEditorProvider.declarationHook, `/* @APComponentDeclaration */ BotonIconComponent`)
+		fs.writeFileSync(`${this.context.extensionPath}\\src\\app\\app.module.ts`, appModuleText);
+	}
+
+	private _resetAppModuleFile(document: vscode.TextDocument): void {
+		const fileNameComponent = document.fileName.split('\\').at(-1)?.replace('.ts', '');
+
+		let appModuleText: string = fs.readFileSync(`${this.context.extensionPath}\\src\\app\\app.module.ts`).toString();
+		appModuleText = replaceLine(appModuleText, ComponentPreviewEditorProvider.importHook, `/* @APComponentImport */`)
+		appModuleText = replaceLine(appModuleText, ComponentPreviewEditorProvider.declarationHook, `/* @APComponentDeclaration */`)
+		fs.writeFileSync(`${this.context.extensionPath}\\src\\app\\app.module.ts`, appModuleText);
 	}
 }

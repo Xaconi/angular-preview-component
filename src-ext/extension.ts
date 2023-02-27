@@ -5,9 +5,9 @@ import * as vscode from 'vscode';
 import { ComponentPreviewEditorProvider } from './editors/componentPreviewEditor';
 
 // Utils
-import { infoMessage } from './utils';
+import { errorMessage, infoMessage, successMessage } from './utils';
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
 
 	infoMessage('Angular Preview started');
 
@@ -15,16 +15,49 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.showInformationMessage('disney classic movies!');
 	});
 
-	context.subscriptions.push(angularPreviewCommand);
-	context.subscriptions.push(ComponentPreviewEditorProvider.register(context));
+	const buildTaskEnd: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
 
-	context.subscriptions.push(vscode.commands.registerCommand('angularpreview.initAngular', () => {
-		infoMessage('Gonna try npm start');
-		const path = context.extensionPath.split("\\").join("\\\\");
-		const terminal = vscode.window.createTerminal(`Angular Preview Terminal`);
-		terminal.sendText(`cd ${path}`);
-		terminal.sendText(`pwd`);
-		terminal.sendText(`ng build --configuration production --output-hashing none`);
+	context.subscriptions.push(angularPreviewCommand);
+	context.subscriptions.push(ComponentPreviewEditorProvider.register(context, buildTaskEnd));
+
+	vscode.tasks.registerTaskProvider('mytask', {
+		provideTasks: () => {
+			const path = context.extensionPath.split("\\").join("/");
+			const tasks: Array<vscode.Task> = [
+				new vscode.Task (
+				{type: 'shell'},
+				vscode.workspace?.workspaceFolders[0],
+				'build-angular',
+				'BuildAngular',
+				new vscode.ShellExecution(`pwd && cd ${path} && npm run build-angular`),
+				["mywarnings"]
+			)];
+			return tasks;
+		},
+		resolveTask(_task: vscode.Task): vscode.Task | undefined {
+			// as far as I can see from the documentation this just needs to return undefined.
+			return _task;
+		}
+	});
+
+	context.subscriptions.push(vscode.commands.registerCommand('angularpreview.initAngular', async () => {
+		const path = context.extensionPath.split("\\").join("\\\\\\");
+		
+		const tasks: Array<vscode.Task> = await vscode.tasks.fetchTasks();
+		const taskBuildAngular: vscode.Task = tasks.find((task: vscode.Task) => task.name === 'build-angular')!;
+		
+
+        vscode.tasks.onDidEndTask(e => {
+            if (e.execution.task.name === 'build-angular') buildTaskEnd.fire();
+        });
+		
+		try {
+			infoMessage('Gonna try build-angular');
+			await vscode.tasks.executeTask(taskBuildAngular);
+			successMessage(`Build-angular command completed`);
+		} catch(error: any) {
+			errorMessage(`ERROR  ON TASK EXECUTION ${error}`);
+		}
 	}));
 	
 }
