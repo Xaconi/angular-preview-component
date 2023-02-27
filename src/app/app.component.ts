@@ -7,4 +7,8 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
   title = 'VSCode Webview Angular';
+
+  public alert(text: string): void {
+    this.title = text;
+  }
 }
