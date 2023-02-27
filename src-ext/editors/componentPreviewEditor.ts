@@ -4,7 +4,8 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 // Utils
-import { getNonce, infoMessage, replaceLine, successMessage, warningMessage } from '../utils';
+import { infoMessage, replaceLine, successMessage, warningMessage } from '../utils';
+import { getClassName } from '../file';
 
 export class ComponentPreviewEditorProvider implements vscode.CustomTextEditorProvider {
 
@@ -30,15 +31,7 @@ export class ComponentPreviewEditorProvider implements vscode.CustomTextEditorPr
 
 		const angularBuildFolder: string = 'out';
 		
-		// @TODO - Create copy component files function
-		const fileNameComponent = document.fileName.split('\\').at(-1)!;
-		const cssFileNameComponent = fileNameComponent.replace(".ts", ".css");
-		const htmlFileNameComponent = fileNameComponent.replace(".ts", ".html");
-		infoMessage('Copy files');
-		fs.copyFileSync(document.fileName, `${this.context.extensionPath}\\src\\component\\${fileNameComponent}`);
-		fs.copyFileSync(document.fileName.replace(".ts", ".css"), `${this.context.extensionPath}\\src\\component\\${cssFileNameComponent}`);
-		fs.copyFileSync(document.fileName.replace(".ts", ".html"), `${this.context.extensionPath}\\src\\component\\${htmlFileNameComponent}`);
-		
+		this._copyComponentFiles(document);
 		this._updateAppModuleFile(document);
 		
 		await vscode.commands.executeCommand('angularpreview.initAngular');
@@ -88,23 +81,34 @@ export class ComponentPreviewEditorProvider implements vscode.CustomTextEditorPr
 	}
 
 	private _updateAppModuleFile(document: vscode.TextDocument): void {
-		const fileNameComponent = document.fileName.split('\\').at(-1)!.replace('.ts', '');
+		const fileNameComponentPath = document.fileName.split('\\').at(-1)!;
+		const fileNameComponent = fileNameComponentPath.replace('.ts', '');
 
 		let appModuleText: string = fs.readFileSync(`${this.context.extensionPath}\\src\\app\\app.module.ts`).toString();
+		let componentText: string = fs.readFileSync(`${document.fileName}`).toString();
 
 		// @TODO - Dynamic component class name
-		const appModuleComponentImport: string = `import { BotonIconComponent } from '../component/${fileNameComponent.replace('.ts', '')}';`;
+		const className = getClassName(componentText);
+		const appModuleComponentImport: string = `import { ${className} } from '../component/${fileNameComponent.replace('.ts', '')}';`;
 		appModuleText = replaceLine(appModuleText, ComponentPreviewEditorProvider.importHook, `/* @APComponentImport */ ${appModuleComponentImport}`)
-		appModuleText = replaceLine(appModuleText, ComponentPreviewEditorProvider.declarationHook, `/* @APComponentDeclaration */ BotonIconComponent`)
+		appModuleText = replaceLine(appModuleText, ComponentPreviewEditorProvider.declarationHook, `/* @APComponentDeclaration */ ${className}`)
 		fs.writeFileSync(`${this.context.extensionPath}\\src\\app\\app.module.ts`, appModuleText);
 	}
 
 	private _resetAppModuleFile(document: vscode.TextDocument): void {
-		const fileNameComponent = document.fileName.split('\\').at(-1)?.replace('.ts', '');
-
 		let appModuleText: string = fs.readFileSync(`${this.context.extensionPath}\\src\\app\\app.module.ts`).toString();
 		appModuleText = replaceLine(appModuleText, ComponentPreviewEditorProvider.importHook, `/* @APComponentImport */`)
 		appModuleText = replaceLine(appModuleText, ComponentPreviewEditorProvider.declarationHook, `/* @APComponentDeclaration */`)
 		fs.writeFileSync(`${this.context.extensionPath}\\src\\app\\app.module.ts`, appModuleText);
+	}
+
+	private _copyComponentFiles(document: vscode.TextDocument): void {
+		const fileNameComponent = document.fileName.split('\\').at(-1)!;
+		const cssFileNameComponent = fileNameComponent.replace(".ts", ".css");
+		const htmlFileNameComponent = fileNameComponent.replace(".ts", ".html");
+		infoMessage('Copy files');
+		fs.copyFileSync(document.fileName, `${this.context.extensionPath}\\src\\component\\${fileNameComponent}`);
+		fs.copyFileSync(document.fileName.replace(".ts", ".css"), `${this.context.extensionPath}\\src\\component\\${cssFileNameComponent}`);
+		fs.copyFileSync(document.fileName.replace(".ts", ".html"), `${this.context.extensionPath}\\src\\component\\${htmlFileNameComponent}`);
 	}
 }

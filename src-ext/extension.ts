@@ -26,7 +26,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			const tasks: Array<vscode.Task> = [
 				new vscode.Task (
 				{type: 'shell'},
-				vscode.workspace?.workspaceFolders[0],
+				vscode.workspace?.workspaceFolders![0],
 				'build-angular',
 				'BuildAngular',
 				new vscode.ShellExecution(`pwd && cd ${path} && npm run build-angular`),
