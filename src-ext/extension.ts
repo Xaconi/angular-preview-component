@@ -54,7 +54,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		try {
 			infoMessage('Gonna try build-angular');
 			await vscode.tasks.executeTask(taskBuildAngular);
-			successMessage(`Build-angular command completed`);
 		} catch(error: any) {
 			errorMessage(`ERROR  ON TASK EXECUTION ${error}`);
 		}

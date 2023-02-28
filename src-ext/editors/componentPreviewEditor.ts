@@ -106,9 +106,17 @@ export class ComponentPreviewEditorProvider implements vscode.CustomTextEditorPr
 		const fileNameComponent = document.fileName.split('\\').at(-1)!;
 		const cssFileNameComponent = fileNameComponent.replace(".ts", ".css");
 		const htmlFileNameComponent = fileNameComponent.replace(".ts", ".html");
+		const scssFileNameComponent = fileNameComponent.replace(".ts", ".scss");
+
+		const tsFileNameComponentPath = document.fileName;
+		const cssFileNameComponentPath = tsFileNameComponentPath.replace(".ts", ".css");
+		const htmlFileNameComponentPath = tsFileNameComponentPath.replace(".ts", ".html");
+		const scssFileNameComponentPath = tsFileNameComponentPath.replace(".ts", ".scss");
+
 		infoMessage('Copy files');
-		fs.copyFileSync(document.fileName, `${this.context.extensionPath}\\src\\component\\${fileNameComponent}`);
-		fs.copyFileSync(document.fileName.replace(".ts", ".css"), `${this.context.extensionPath}\\src\\component\\${cssFileNameComponent}`);
-		fs.copyFileSync(document.fileName.replace(".ts", ".html"), `${this.context.extensionPath}\\src\\component\\${htmlFileNameComponent}`);
+		if(fs.existsSync(tsFileNameComponentPath)) fs.copyFileSync(tsFileNameComponentPath, `${this.context.extensionPath}\\src\\component\\${fileNameComponent}`);
+		if(fs.existsSync(cssFileNameComponentPath)) fs.copyFileSync(document.fileName.replace(".ts", ".css"), `${this.context.extensionPath}\\src\\component\\${cssFileNameComponent}`);
+		if(fs.existsSync(htmlFileNameComponentPath)) fs.copyFileSync(document.fileName.replace(".ts", ".html"), `${this.context.extensionPath}\\src\\component\\${htmlFileNameComponent}`);
+		if(fs.existsSync(scssFileNameComponentPath)) fs.copyFileSync(document.fileName.replace(".ts", ".scss"), `${this.context.extensionPath}\\src\\component\\${scssFileNameComponent}`);
 	}
 }
