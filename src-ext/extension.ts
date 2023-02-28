@@ -10,15 +10,9 @@ import { errorMessage, infoMessage } from './utils/utils';
 export async function activate(context: vscode.ExtensionContext) {
 
 	infoMessage('Angular Preview started');
-
-	let angularPreviewCommand = vscode.commands.registerCommand('angularpreview.setAngularPreview', () => {
-		vscode.window.showInformationMessage('disney classic movies!');
-	});
-
 	const componentPreviewEditorProvider: ComponentPreviewEditorProvider = new ComponentPreviewEditorProvider(context);
 	const buildTaskEnd: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
 
-	context.subscriptions.push(angularPreviewCommand);
 	context.subscriptions.push(componentPreviewEditorProvider.register(context, buildTaskEnd));
 
 	vscode.tasks.registerTaskProvider('mytask', {

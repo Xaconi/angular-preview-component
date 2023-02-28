@@ -26,7 +26,6 @@ export class ComponentPreviewEditorProvider implements vscode.CustomTextEditorPr
     public register(context: vscode.ExtensionContext, buildTaskSuscription: vscode.EventEmitter<void>): vscode.Disposable {
 		const provider = new ComponentPreviewEditorProvider(context);
         const providerRegistration = vscode.window.registerCustomEditorProvider(ComponentPreviewEditorProvider.viewType, provider);
-		
 
 		ComponentPreviewEditorProvider.buildTaskSuscription = buildTaskSuscription;
 

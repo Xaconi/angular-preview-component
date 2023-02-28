@@ -11,13 +11,6 @@
   ],
   "main": "./out/extension/src-ext/extension.js",
   "contributes": {
-    "commands": [
-      {
-        "command": "angularpreview.setAngularPreview",
-        "title": "Angular Preview",
-        "category": "Angular Preview"
-      }
-    ],
     "customEditors": [
       {
         "viewType": "angularpreview.componentPreview",
