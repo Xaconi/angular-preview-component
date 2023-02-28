@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 import { ComponentPreviewEditorProvider } from './editors/componentPreviewEditor';
 
 // Utils
-import { errorMessage, infoMessage, successMessage } from './utils';
+import { errorMessage, infoMessage } from './utils/utils';
 
 export async function activate(context: vscode.ExtensionContext) {
 
@@ -15,10 +15,11 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.window.showInformationMessage('disney classic movies!');
 	});
 
+	const componentPreviewEditorProvider: ComponentPreviewEditorProvider = new ComponentPreviewEditorProvider(context);
 	const buildTaskEnd: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
 
 	context.subscriptions.push(angularPreviewCommand);
-	context.subscriptions.push(ComponentPreviewEditorProvider.register(context, buildTaskEnd));
+	context.subscriptions.push(componentPreviewEditorProvider.register(context, buildTaskEnd));
 
 	vscode.tasks.registerTaskProvider('mytask', {
 		provideTasks: () => {

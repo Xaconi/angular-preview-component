@@ -4,68 +4,51 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 // Utils
-import { infoMessage, replaceLine, successMessage, warningMessage } from '../utils';
-import { getClassName } from '../file';
+import { infoMessage, successMessage } from '../utils/utils';
+
+// Component
+import Component from '../component/component';
 
 export class ComponentPreviewEditorProvider implements vscode.CustomTextEditorProvider {
 
     // Data
     private static readonly viewType = 'angularpreview.componentPreview';
-	private static readonly importHook = '@APComponentImport';
-	private static readonly declarationHook = '@APComponentDeclaration';
+	private static readonly angularBuildFolder: string = 'out';
 	private static buildTaskSuscription: vscode.EventEmitter<void>;
+	private _componentTask?: Component;
 
+	public webviewPanel: vscode.WebviewPanel;
+	
     constructor(
 		private readonly context: vscode.ExtensionContext
 	) { }
 
-    public static register(context: vscode.ExtensionContext, buildTaskSuscription: vscode.EventEmitter<void>): vscode.Disposable {
-		ComponentPreviewEditorProvider.buildTaskSuscription = buildTaskSuscription;
-        const provider = new ComponentPreviewEditorProvider(context);
+    public register(context: vscode.ExtensionContext, buildTaskSuscription: vscode.EventEmitter<void>): vscode.Disposable {
+		const provider = new ComponentPreviewEditorProvider(context);
         const providerRegistration = vscode.window.registerCustomEditorProvider(ComponentPreviewEditorProvider.viewType, provider);
+		
+
+		ComponentPreviewEditorProvider.buildTaskSuscription = buildTaskSuscription;
+
 		return providerRegistration;
     }
     
     public async resolveCustomTextEditor(document: vscode.TextDocument, webviewPanel: vscode.WebviewPanel, _token: vscode.CancellationToken): Promise<void> {
 		infoMessage('Custom Text Editor enabled');
-
-		const angularBuildFolder: string = 'out';
 		
-		this._copyComponentFiles(document);
-		this._updateAppModuleFile(document);
+		this.webviewPanel = webviewPanel;
+		this._componentTask = new Component(this.context, ComponentPreviewEditorProvider.buildTaskSuscription);
+		this._componentTask?.init(document);
 		
 		await vscode.commands.executeCommand('angularpreview.initAngular');
-
 		ComponentPreviewEditorProvider.buildTaskSuscription.event(() => {
-			this._resetAppModuleFile(document);
-			webviewPanel.webview.options = {
-				enableScripts: true,
-				localResourceRoots: [vscode.Uri.file(path.join(this.context.extensionPath, angularBuildFolder))]
-			};
-			const documentName:string = document.uri.path.split("/").at(-1)!;
-			webviewPanel.webview.html = this._getHtmlForWebview(webviewPanel.webview);
-			
-			updateWebview();
+			this._createWebviewPanel(document);
+			this._updateWebviewPanel(document);
 			
 			successMessage("BUILD TASK OK");
 		});
 
-		function updateWebview() {
-			webviewPanel.webview.postMessage({
-				type: 'update',
-				text: document.getText(),
-			});
-		}
-
-		const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument(e => {
-			if (e.document.uri.toString() === document.uri.toString()) {
-				updateWebview();
-			}
-		});
-
-		webviewPanel.onDidDispose(() => {
-			changeDocumentSubscription.dispose();
-		});
+		this._setWebviewListeners(document);
 	}
 
     private _getHtmlForWebview(webview: vscode.Webview): string {
@@ -80,43 +63,29 @@ export class ComponentPreviewEditorProvider implements vscode.CustomTextEditorPr
 		return indexHtml;
 	}
 
-	private _updateAppModuleFile(document: vscode.TextDocument): void {
-		const fileNameComponentPath = document.fileName.split('\\').at(-1)!;
-		const fileNameComponent = fileNameComponentPath.replace('.ts', '');
-
-		let appModuleText: string = fs.readFileSync(`${this.context.extensionPath}\\src\\app\\app.module.ts`).toString();
-		let componentText: string = fs.readFileSync(`${document.fileName}`).toString();
-
-		// @TODO - Dynamic component class name
-		const className = getClassName(componentText);
-		const appModuleComponentImport: string = `import { ${className} } from '../component/${fileNameComponent.replace('.ts', '')}';`;
-		appModuleText = replaceLine(appModuleText, ComponentPreviewEditorProvider.importHook, `/* @APComponentImport */ ${appModuleComponentImport}`)
-		appModuleText = replaceLine(appModuleText, ComponentPreviewEditorProvider.declarationHook, `/* @APComponentDeclaration */ ${className}`)
-		fs.writeFileSync(`${this.context.extensionPath}\\src\\app\\app.module.ts`, appModuleText);
+	private _createWebviewPanel(document: vscode.TextDocument): void {
+		this.webviewPanel.webview.options = {
+			enableScripts: true,
+			localResourceRoots: [vscode.Uri.file(path.join(this.context.extensionPath, ComponentPreviewEditorProvider.angularBuildFolder))]
+		};
+		const documentName:string = document.uri.path.split("/").at(-1)!;
+		this.webviewPanel.webview.html = this._getHtmlForWebview(this.webviewPanel.webview);
 	}
 
-	private _resetAppModuleFile(document: vscode.TextDocument): void {
-		let appModuleText: string = fs.readFileSync(`${this.context.extensionPath}\\src\\app\\app.module.ts`).toString();
-		appModuleText = replaceLine(appModuleText, ComponentPreviewEditorProvider.importHook, `/* @APComponentImport */`)
-		appModuleText = replaceLine(appModuleText, ComponentPreviewEditorProvider.declarationHook, `/* @APComponentDeclaration */`)
-		fs.writeFileSync(`${this.context.extensionPath}\\src\\app\\app.module.ts`, appModuleText);
+	private _updateWebviewPanel(document: vscode.TextDocument): void {
+		this.webviewPanel.webview.postMessage({
+			type: 'update',
+			text: document.getText(),
+		});
 	}
 
-	private _copyComponentFiles(document: vscode.TextDocument): void {
-		const fileNameComponent = document.fileName.split('\\').at(-1)!;
-		const cssFileNameComponent = fileNameComponent.replace(".ts", ".css");
-		const htmlFileNameComponent = fileNameComponent.replace(".ts", ".html");
-		const scssFileNameComponent = fileNameComponent.replace(".ts", ".scss");
+	private _setWebviewListeners(document: vscode.TextDocument): void {
+		const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument((event: vscode.TextDocumentChangeEvent) => {
+			if (event.document.uri.toString() === document.uri.toString()) {
+				this._updateWebviewPanel(event.document);
+			}
+		});
 
-		const tsFileNameComponentPath = document.fileName;
-		const cssFileNameComponentPath = tsFileNameComponentPath.replace(".ts", ".css");
-		const htmlFileNameComponentPath = tsFileNameComponentPath.replace(".ts", ".html");
-		const scssFileNameComponentPath = tsFileNameComponentPath.replace(".ts", ".scss");
-
-		infoMessage('Copy files');
-		if(fs.existsSync(tsFileNameComponentPath)) fs.copyFileSync(tsFileNameComponentPath, `${this.context.extensionPath}\\src\\component\\${fileNameComponent}`);
-		if(fs.existsSync(cssFileNameComponentPath)) fs.copyFileSync(document.fileName.replace(".ts", ".css"), `${this.context.extensionPath}\\src\\component\\${cssFileNameComponent}`);
-		if(fs.existsSync(htmlFileNameComponentPath)) fs.copyFileSync(document.fileName.replace(".ts", ".html"), `${this.context.extensionPath}\\src\\component\\${htmlFileNameComponent}`);
-		if(fs.existsSync(scssFileNameComponentPath)) fs.copyFileSync(document.fileName.replace(".ts", ".scss"), `${this.context.extensionPath}\\src\\component\\${scssFileNameComponent}`);
+		this.webviewPanel.onDidDispose(() => changeDocumentSubscription.dispose());
 	}
 }
