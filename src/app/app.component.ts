@@ -1,17 +1,22 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent {
-  title = 'VSCode Webview Angular';
+export class AppComponent implements OnInit{
+  public componentPropsString: Array<string> = [];
 
-/* @APComponentProps */ public componentProps
+/* @APComponentProps */ public componentProps;
 
-  public changeText(text: string): void {
-    this.componentProps.text = text;
-    alert(text);
+  ngOnInit() {
+    Object.keys(this.componentProps).forEach(key => {
+      if(typeof this.componentProps[key] === 'string') this.componentPropsString.push(key);
+    })
+  }
+
+  public changePropString(text: string, componentStringKey: string): void {
+    this.componentProps[componentStringKey] = text;
   }
 }

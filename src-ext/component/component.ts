@@ -4,7 +4,7 @@ import * as fs from 'fs';
 
 // Utils
 import { infoMessage, replaceLine } from '../utils/utils';
-import { getClassName, getInputs, getInputsProps, getInputsString, getSelector } from '../utils/file';
+import { getClassName, getInputs, getInputsProps, getInputsPropsValues, getInputsString, getSelector } from '../utils/file';
 
 // Modles
 import InputData from 'src-ext/models/inputData';
@@ -81,7 +81,8 @@ export default class Component {
 
 		let appComponentText = fs.readFileSync(this._appComponentTSFilePath).toString();
 		const componentInputsProps: string = getInputsProps(componentInputs);
-		appComponentText = replaceLine(appComponentText, Component.propsHook, `${Component.propsHook} public ${Component.componentVar}: {${componentInputsProps}} = {};`);
+		const componentInputsPropsValues: string = getInputsPropsValues(componentInputs);
+		appComponentText = replaceLine(appComponentText, Component.propsHook, `${Component.propsHook} public ${Component.componentVar}: {${componentInputsProps}} = {${componentInputsPropsValues}};`);
 		fs.writeFileSync(this._appComponentTSFilePath, appComponentText);
 	}
 
@@ -104,7 +105,7 @@ export default class Component {
 		fs.writeFileSync(this._appComponentHTMLFilePath, appComponentHTMLText);
 
 		let appComponentTsText: string = fs.readFileSync(this._appComponentTSFilePath).toString();
-		appComponentTsText = replaceLine(appComponentTsText, Component.propsHook, `${Component.propsHook} public ${Component.componentVar}`);
+		appComponentTsText = replaceLine(appComponentTsText, Component.propsHook, `${Component.propsHook} public ${Component.componentVar};`);
 		fs.writeFileSync(this._appComponentTSFilePath, appComponentTsText);
 	}
 	

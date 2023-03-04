@@ -54,3 +54,27 @@ export function getInputsProps(componentInputs: Array<InputData>): string {
     });
     return componentInputsProps.join('');
 }
+
+export function getInputsPropsValues(componentInputs: Array<InputData>): string {
+    let comma = ",";
+    const componentInputsProps: Array<string> = [];
+    componentInputs.forEach((componentInputsProp: InputData, index: number) => {
+        switch(componentInputsProp.type) {
+            case 'string':
+            case 'String':
+                componentInputsProps.push(`${componentInputsProp.name}: '',`);
+                break;
+            case 'number':
+            case 'Number':
+                componentInputsProps.push(`${componentInputsProp.name}: 0,`);
+                break;
+            case 'Boolean':
+            case 'boolean':
+                componentInputsProps.push(`${componentInputsProp.name}: false,`);
+                break;
+            default:
+                break;
+        }
+    });
+    return componentInputsProps.join('');
+}
