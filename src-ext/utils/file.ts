@@ -5,7 +5,7 @@ export function getClassName(data: string): string {
 }
 
 export function getSelector(data: string): string {
-    const matches = data.match(/selector: '(.+)'/);
+    const matches = data.match(/selector:[ ]?'(.+)'/);
     const selector: string = matches![1]!;
     return selector;
 }
