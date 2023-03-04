@@ -4,17 +4,25 @@ import * as fs from 'fs';
 
 // Utils
 import { infoMessage, replaceLine } from '../utils/utils';
-import { getClassName } from '../utils/file';
+import { getClassName, getSelector } from '../utils/file';
 
 export default class Component {
-    private static readonly importHook = '@APComponentImport';
-	private static readonly declarationHook = '@APComponentDeclaration';
+    private static readonly importHook = '/* @APComponentImport */';
+	private static readonly declarationHook = '/* @APComponentDeclaration */';
+	private static readonly htmlHook = '<!-- @APComponentHTML -->';
+
     private static buildTaskSuscription: vscode.EventEmitter<void>;
     private static context: vscode.ExtensionContext;
+
+	private _appModuleFilePath :string;
+	private _appComponentHTMLFilePath: string;
 
     constructor(context: vscode.ExtensionContext, buildTaskSuscription: vscode.EventEmitter<void>) {
         Component.buildTaskSuscription = buildTaskSuscription;
         Component.context = context;
+
+		this._appModuleFilePath = `${Component.context.extensionPath}\\src\\app\\app.module.ts`;
+		this._appComponentHTMLFilePath = `${Component.context.extensionPath}\\src\\app\\app.component.html`;
 
         return this;
     }
@@ -22,10 +30,9 @@ export default class Component {
     public init(document: vscode.TextDocument): void {
         this._copyFiles(document);
         this._updateAppModuleFile(document);
+		this._updateAppHTMLFile(document);
 
-        Component.buildTaskSuscription.event(() => {
-			this._resetAppModuleFile();
-		});
+        Component.buildTaskSuscription.event(() => this._resetFiles());
     }
 
     private _copyFiles(document: vscode.TextDocument): void {
@@ -50,20 +57,41 @@ export default class Component {
 		const fileNameComponentPath = document.fileName.split('\\').at(-1)!;
 		const fileNameComponent = fileNameComponentPath.replace('.ts', '');
 
-		let appModuleText: string = fs.readFileSync(`${Component.context.extensionPath}\\src\\app\\app.module.ts`).toString();
+		let appModuleText: string = fs.readFileSync(this._appModuleFilePath).toString();
 		let componentText: string = fs.readFileSync(`${document.fileName}`).toString();
 
 		const className = getClassName(componentText);
 		const appModuleComponentImport: string = `import { ${className} } from '../component/${fileNameComponent.replace('.ts', '')}';`;
-		appModuleText = replaceLine(appModuleText, Component.importHook, `/* @APComponentImport */ ${appModuleComponentImport}`)
-		appModuleText = replaceLine(appModuleText, Component.declarationHook, `/* @APComponentDeclaration */ ${className}`)
-		fs.writeFileSync(`${Component.context.extensionPath}\\src\\app\\app.module.ts`, appModuleText);
+		appModuleText = replaceLine(appModuleText, Component.importHook, `${Component.importHook} ${appModuleComponentImport}`)
+		appModuleText = replaceLine(appModuleText, Component.declarationHook, `${Component.declarationHook} ${className}`)
+		fs.writeFileSync(this._appModuleFilePath, appModuleText);
 	}
 
-	private _resetAppModuleFile(): void {
-		let appModuleText: string = fs.readFileSync(`${Component.context.extensionPath}\\src\\app\\app.module.ts`).toString();
-		appModuleText = replaceLine(appModuleText, Component.importHook, `/* @APComponentImport */`)
-		appModuleText = replaceLine(appModuleText, Component.declarationHook, `/* @APComponentDeclaration */`)
-		fs.writeFileSync(`${Component.context.extensionPath}\\src\\app\\app.module.ts`, appModuleText);
+	private _updateAppHTMLFile(document: vscode.TextDocument): void {
+		let appModuleText: string = fs.readFileSync(this._appComponentHTMLFilePath).toString();
+		
+		const componentHTML: string = this._writeComponent(document);
+		appModuleText = replaceLine(appModuleText, Component.htmlHook, `${Component.htmlHook} ${componentHTML}`)
+		fs.writeFileSync(this._appComponentHTMLFilePath, appModuleText);
+	}
+
+	private _resetFiles(): void {
+		let appModuleText: string = fs.readFileSync(this._appModuleFilePath).toString();
+		appModuleText = replaceLine(appModuleText, Component.importHook, Component.importHook);
+		appModuleText = replaceLine(appModuleText, Component.declarationHook, Component.declarationHook);
+		fs.writeFileSync(this._appModuleFilePath, appModuleText);
+
+		let appComponentHTMLText: string = fs.readFileSync(this._appComponentHTMLFilePath).toString();
+		appComponentHTMLText = replaceLine(appComponentHTMLText, Component.htmlHook, Component.htmlHook);
+		fs.writeFileSync(this._appComponentHTMLFilePath, appComponentHTMLText);
+	}
+	
+	private _writeComponent(document: vscode.TextDocument): string {
+		let componentText: string = fs.readFileSync(`${document.fileName}`).toString();
+		const componentSelector: string  = getSelector(componentText);
+
+		// @TODO Read component inputs
+
+		return `<${componentSelector}></${componentSelector}>`;
 	}
 }
