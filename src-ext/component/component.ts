@@ -4,17 +4,23 @@ import * as fs from 'fs';
 
 // Utils
 import { infoMessage, replaceLine } from '../utils/utils';
-import { getClassName, getSelector } from '../utils/file';
+import { getClassName, getInputs, getInputsProps, getInputsString, getSelector } from '../utils/file';
+
+// Modles
+import InputData from 'src-ext/models/inputData';
 
 export default class Component {
     private static readonly importHook = '/* @APComponentImport */';
 	private static readonly declarationHook = '/* @APComponentDeclaration */';
+	private static readonly propsHook = '/* @APComponentProps */';
 	private static readonly htmlHook = '<!-- @APComponentHTML -->';
+	private static readonly componentVar = 'componentProps';
 
     private static buildTaskSuscription: vscode.EventEmitter<void>;
     private static context: vscode.ExtensionContext;
 
 	private _appModuleFilePath :string;
+	private _appComponentTSFilePath: string;
 	private _appComponentHTMLFilePath: string;
 
     constructor(context: vscode.ExtensionContext, buildTaskSuscription: vscode.EventEmitter<void>) {
@@ -22,6 +28,7 @@ export default class Component {
         Component.context = context;
 
 		this._appModuleFilePath = `${Component.context.extensionPath}\\src\\app\\app.module.ts`;
+		this._appComponentTSFilePath = `${Component.context.extensionPath}\\src\\app\\app.component.ts`;
 		this._appComponentHTMLFilePath = `${Component.context.extensionPath}\\src\\app\\app.component.html`;
 
         return this;
@@ -30,6 +37,7 @@ export default class Component {
     public init(document: vscode.TextDocument): void {
         this._copyFiles(document);
         this._updateAppModuleFile(document);
+		this._updateAppComponentFile(document);
 		this._updateAppHTMLFile(document);
 
         Component.buildTaskSuscription.event(() => this._resetFiles());
@@ -67,6 +75,16 @@ export default class Component {
 		fs.writeFileSync(this._appModuleFilePath, appModuleText);
 	}
 
+	private _updateAppComponentFile(document: vscode.TextDocument): void {
+		let componentText: string = fs.readFileSync(`${document.fileName}`).toString();
+		const componentInputs: Array<InputData> = getInputs(componentText);
+
+		let appComponentText = fs.readFileSync(this._appComponentTSFilePath).toString();
+		const componentInputsProps: string = getInputsProps(componentInputs);
+		appComponentText = replaceLine(appComponentText, Component.propsHook, `${Component.propsHook} public ${Component.componentVar}: {${componentInputsProps}} = {};`);
+		fs.writeFileSync(this._appComponentTSFilePath, appComponentText);
+	}
+
 	private _updateAppHTMLFile(document: vscode.TextDocument): void {
 		let appModuleText: string = fs.readFileSync(this._appComponentHTMLFilePath).toString();
 		
@@ -84,14 +102,19 @@ export default class Component {
 		let appComponentHTMLText: string = fs.readFileSync(this._appComponentHTMLFilePath).toString();
 		appComponentHTMLText = replaceLine(appComponentHTMLText, Component.htmlHook, Component.htmlHook);
 		fs.writeFileSync(this._appComponentHTMLFilePath, appComponentHTMLText);
+
+		let appComponentTsText: string = fs.readFileSync(this._appComponentTSFilePath).toString();
+		appComponentTsText = replaceLine(appComponentTsText, Component.propsHook, `${Component.propsHook} public ${Component.componentVar}`);
+		fs.writeFileSync(this._appComponentTSFilePath, appComponentTsText);
 	}
 	
 	private _writeComponent(document: vscode.TextDocument): string {
 		let componentText: string = fs.readFileSync(`${document.fileName}`).toString();
 		const componentSelector: string  = getSelector(componentText);
 
-		// @TODO Read component inputs
+		const componentInputs: Array<InputData> = getInputs(componentText);
+		const inputsText: string = getInputsString(componentInputs, Component.componentVar);
 
-		return `<${componentSelector}></${componentSelector}>`;
+		return `<${componentSelector} ${inputsText}></${componentSelector}>`;
 	}
 }
