@@ -24,7 +24,7 @@ export function getInputs(data: string): Array<InputData> {
     const inputs: Array<InputData> = []; 
     matches?.forEach(match => {
         const matchesInput = match.match(REGEX_INPUTS);
-        inputs.push({ name: matchesInput[4], type: matchesInput[6] });
+        if(matchesInput) inputs.push({ name: matchesInput[4], type: matchesInput[6] });
     });
     return inputs;
 }
