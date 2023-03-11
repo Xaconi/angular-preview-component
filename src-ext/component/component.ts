@@ -7,7 +7,7 @@ import { infoMessage, replaceLine } from '../utils/utils';
 import { getClassName, getInputs, getInputsProps, getInputsPropsValues, getInputsString, getSelector } from '../utils/file';
 
 // Modles
-import InputData from 'src-ext/models/inputData';
+import InputData from '../models/inputData';
 
 export default class Component {
     private static readonly importHook = '/* @APComponentImport */';
