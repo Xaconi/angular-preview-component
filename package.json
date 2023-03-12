@@ -11,24 +11,26 @@
   ],
   "main": "./out/extension/src-ext/extension.js",
   "contributes": {
-    "customEditors": [
+    "commands": [
       {
-        "viewType": "angularpreview.componentPreview",
-        "displayName": "Angular Component Preview",
-        "selector": [
-          {
-            "filenamePattern": "*.component.ts"
-          },
-          {
-            "filenamePattern": "*.component.html"
-          },
-          {
-            "filenamePattern": "*.component.scss"
-          }
-        ],
-        "priority": "default"
+        "command": "angularpreview.initAngular",
+        "title": "Init Angular Build",
+        "icon": {
+          "dark": "media/icons/preview_dark.svg",
+          "light": "media/icons/preview.svg"
+        }
       }
     ],
+    "menus": {
+      "editor/title": [
+          {
+              "when": "editorLangId == typescript",
+              "command": "angularpreview.initAngular",
+              "group": "navigation",
+              "title": "Init Angular Build"
+          }
+      ]
+    },
     "taskDefinitions": [
         {
             "type": "mytask"
