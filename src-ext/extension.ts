@@ -1,9 +1,11 @@
 // Core
 import * as vscode from 'vscode';
+
+// Commands
 import initAngular from './commands/initAngular';
 
-// Editor
-import { ComponentPreviewEditorProvider } from './editors/componentPreviewEditor';
+// Panels
+import { WebviewPanel } from './panels/webviewPanel';
 
 // Utils
 import { errorMessage, infoMessage } from './utils/utils';
@@ -11,10 +13,10 @@ import { errorMessage, infoMessage } from './utils/utils';
 export async function activate(context: vscode.ExtensionContext) {
 
 	infoMessage('Angular Preview started');
-	const componentPreviewEditorProvider: ComponentPreviewEditorProvider = new ComponentPreviewEditorProvider(context);
 	const buildTaskEnd: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
 
-	context.subscriptions.push(componentPreviewEditorProvider.register(context, buildTaskEnd));
+	const webviewPanel: WebviewPanel = new WebviewPanel();
+	webviewPanel.init(context, buildTaskEnd)
 
 	vscode.tasks.registerTaskProvider('mytask', {
 		provideTasks: () => {
