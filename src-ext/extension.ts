@@ -1,5 +1,6 @@
 // Core
 import * as vscode from 'vscode';
+import initAngular from './commands/initAngular';
 
 // Editor
 import { ComponentPreviewEditorProvider } from './editors/componentPreviewEditor';
@@ -35,24 +36,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
-	context.subscriptions.push(vscode.commands.registerCommand('angularpreview.initAngular', async () => {
-		const path = context.extensionPath.split("\\").join("\\\\\\");
-		
-		const tasks: Array<vscode.Task> = await vscode.tasks.fetchTasks();
-		const taskBuildAngular: vscode.Task = tasks.find((task: vscode.Task) => task.name === 'build-angular')!;
-		
-
-        vscode.tasks.onDidEndTask(e => {
-            if (e.execution.task.name === 'build-angular') buildTaskEnd.fire();
-        });
-		
-		try {
-			infoMessage('Gonna try build-angular');
-			await vscode.tasks.executeTask(taskBuildAngular);
-		} catch(error: any) {
-			errorMessage(`ERROR  ON TASK EXECUTION ${error}`);
-		}
-	}));
+	context.subscriptions.push(vscode.commands.registerCommand('angularpreview.initAngular', () => initAngular(context, buildTaskEnd)));
 	
 }
 
