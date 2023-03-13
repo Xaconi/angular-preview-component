@@ -1,5 +1,3 @@
-<h2>LENGTH:{{ componentPropsString.length }}</h2>
-
 <!-- @APComponentHTML -->
 
 <ng-container *ngFor="let componentStringKey of componentPropsString">
@@ -16,6 +14,14 @@
     <option value="true">true</option>
     <option value="false" selected="selected">false</option>
   </select>
+</ng-container>
+
+<ng-container *ngFor="let componentNumberKey of componentPropsNumber">
+  <h2>PROP: {{ componentNumberKey }}</h2>
+  <input 
+    [(ngModel)]="componentProps[componentNumberKey]"
+    (ngModelChange)="changePropNumber($event, componentNumberKey)"
+    type="number" />
 </ng-container>
 
 

@@ -31,7 +31,7 @@ export class WebviewPanel implements vscode.WebviewPanelSerializer {
 		this._buildTaskSuscription = buildTaskSuscription;
 
 		this._componentTask = new Component(this._context, this._buildTaskSuscription);
-		const activeEditor: vscode.TextEditor = vscode.window.activeTextEditor;
+		const activeEditor: vscode.TextEditor = vscode.window.activeTextEditor!;
     	const document: vscode.TextDocument = activeEditor.document;
 		this._componentTask?.init(document);
 		

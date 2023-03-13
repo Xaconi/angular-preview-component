@@ -9,7 +9,7 @@ import { WebviewPanel } from './panels/webviewPanel';
 import addBuildTask from './tasks/build';
 
 // Utils
-import { errorMessage, infoMessage } from './utils/utils';
+import { infoMessage } from './utils/utils';
 
 export async function activate(context: vscode.ExtensionContext) {
 
