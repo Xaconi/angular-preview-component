@@ -19,6 +19,7 @@ export class WebviewPanel implements vscode.WebviewPanelSerializer {
 	private _webviewPanel: vscode.WebviewPanel;
 	private _context: vscode.ExtensionContext
 	private _buildTaskSuscription: vscode.EventEmitter<void>;
+	private _document: vscode.TextDocument;
 
 	deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: unknown): Thenable<void> {
 		throw new Error('Method not implemented.');
@@ -32,17 +33,15 @@ export class WebviewPanel implements vscode.WebviewPanelSerializer {
 
 		this._componentTask = new Component(this._context, this._buildTaskSuscription);
 		const activeEditor: vscode.TextEditor = vscode.window.activeTextEditor!;
-    	const document: vscode.TextDocument = activeEditor.document;
-		this._componentTask?.init(document);
+    	this._document = activeEditor.document;
+		this._componentTask?.init(this._document);
 		
 		this._buildTaskSuscription.event(() => {
-			this._createWebviewPanel(document);
-			this._updateWebviewPanel(document);
+			this._createWebviewPanel(this._document);
+			this._updateWebviewPanel(this._document);
 			
 			successMessage("BUILD TASK OK");
 		});
-
-		this._setWebviewListeners(document);
 	}
 
     private _getHtmlForWebview(webview: vscode.Webview): string {
@@ -69,6 +68,8 @@ export class WebviewPanel implements vscode.WebviewPanelSerializer {
 		);
 
 		this._webviewPanel.webview.html = this._getHtmlForWebview(this._webviewPanel.webview);
+
+		this._setWebviewListeners();
 	}
 
 	private _updateWebviewPanel(document: vscode.TextDocument): void {
@@ -78,10 +79,11 @@ export class WebviewPanel implements vscode.WebviewPanelSerializer {
 		});
 	}
 
-	private _setWebviewListeners(document: vscode.TextDocument): void {
-		const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument((event: vscode.TextDocumentChangeEvent) => {
-			if (event.document.uri.toString() === document.uri.toString()) {
-				this._updateWebviewPanel(event.document);
+	private _setWebviewListeners(): void {
+		const changeDocumentSubscription = vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
+			if (document.uri.toString() === this._document.uri.toString()) {
+				// @TODO Loading HTML
+				vscode.commands.executeCommand('angularpreview.initAngular');
 			}
 		});
 
