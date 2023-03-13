@@ -2,7 +2,7 @@
 import InputData from "../models/inputData";
 
 // Constants
-const REGEX_CLASSNAME = /export class ([a-zA-Z]+)[ ]+{/;
+const REGEX_CLASSNAME = /export class ([a-zA-Z]+)/;
 const REGEX_SELECTOR = /selector:[ ]?'(.+)'/;
 const REGEX_INPUTS = /@Input\((.+)?\) (public )?(private )?(.[^ ]+)(:| :)[ ]?(string|number|boolean|String|Number|Boolean)[;]?/;
 const REGEX_INPUTS_GLOBAL = /@Input\((.+)?\) (public )?(private )?(.[^ ]+)(:| :)[ ]?(string|number|boolean|String|Number|Boolean)[;]?/g;
