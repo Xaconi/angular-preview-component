@@ -88,7 +88,10 @@ export class WebviewPanel implements vscode.WebviewPanelSerializer {
 			}
 		});
 
-		this._webviewPanel.onDidDispose(() => changeDocumentSubscription.dispose());
+		this._webviewPanel.onDidDispose(() => {
+			changeDocumentSubscription.dispose();
+			this._webviewPanel = null;
+		});
 	}
 
 	private _initComponent(): void {
