@@ -43,6 +43,13 @@ export default class Component {
         Component.buildTaskSuscription.event(() => this._resetFiles());
     }
 
+	public update(document: vscode.TextDocument): void {
+        this._copyFiles(document);
+        this._updateAppModuleFile(document);
+		this._updateAppComponentFile(document);
+		this._updateAppHTMLFile(document);
+    }
+
     private _copyFiles(document: vscode.TextDocument): void {
 		const fileNameComponent = document.fileName.split('\\').at(-1)!;
 		const cssFileNameComponent = fileNameComponent.replace(".ts", ".css");

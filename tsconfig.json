@@ -2,7 +2,7 @@
   "compileOnSave": false,
   "compilerOptions": {
     "baseUrl": "./",
-    "outDir": "./out/angular-app",
+    "outDir": "./out",
     "sourceMap": true,
     "declaration": false,
     "downlevelIteration": true,

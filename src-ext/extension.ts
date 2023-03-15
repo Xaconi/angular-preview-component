@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 
 // Commands
 import initAngular from './commands/initAngular';
+import updateAngular from './commands/updateAngular';
 
 // Panels
 import { WebviewPanel } from './panels/webviewPanel';
@@ -17,11 +18,17 @@ export async function activate(context: vscode.ExtensionContext) {
 	const buildTaskEnd: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
 
 	const webviewPanel: WebviewPanel = new WebviewPanel();
-	webviewPanel.init(context, buildTaskEnd)
 
 	addBuildTask(context);
 
-	context.subscriptions.push(vscode.commands.registerCommand('angularpreview.initAngular', () => initAngular(context, buildTaskEnd)));
+	context.subscriptions.push(vscode.commands.registerCommand('angularpreview.initAngular', () => {
+		webviewPanel.init(context, buildTaskEnd);
+		initAngular(context, buildTaskEnd);
+	}));
+	context.subscriptions.push(vscode.commands.registerCommand('angularpreview.updateAngular', () => {
+		webviewPanel.update(context);
+		updateAngular(context, buildTaskEnd);
+	}));
 	
 }
 
