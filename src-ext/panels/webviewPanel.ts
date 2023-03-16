@@ -32,10 +32,11 @@ export class WebviewPanel implements vscode.WebviewPanelSerializer {
 		this._context = context;
 		this._buildTaskSuscription = buildTaskSuscription;
 
+		if(!this._webviewPanel) this._createWebviewPanel(this._document);
+		this._mountLoading();
 		this._initComponent();
 		
 		this._buildTaskSuscription.event(() => {
-			if(!this._webviewPanel) this._createWebviewPanel(this._document);
 			this._updateWebviewPanel(this._document);
 			
 			successMessage("BUILD TASK OK");
@@ -45,6 +46,7 @@ export class WebviewPanel implements vscode.WebviewPanelSerializer {
 	public async update(context: vscode.ExtensionContext): Promise<void> {
 		infoMessage('Webview Panel Update');
 		
+		this._mountLoading();
 		this._context = context;
 		this._initComponent();
 	}
@@ -74,6 +76,13 @@ export class WebviewPanel implements vscode.WebviewPanelSerializer {
 		);
 
 		this._setWebviewListeners();
+	}
+
+	private _mountLoading(): void {
+		const htmlPath = path.join(this._context.extensionPath, 'src-ext/panels/html');
+		const loadingPath = path.join(htmlPath, 'loading.html');
+		const loadingHTML = fs.readFileSync(loadingPath, { encoding: 'utf8' });
+		this._webviewPanel.webview.html = loadingHTML;
 	}
 
 	private _updateWebviewPanel(document: vscode.TextDocument): void {
