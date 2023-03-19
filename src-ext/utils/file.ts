@@ -1,14 +1,14 @@
 // Models
 import InputData from "../models/inputData";
 
-// Constants
-const REGEX_CLASSNAME = /export class ([a-zA-Z]+)/;
-const REGEX_SELECTOR = /selector:[ ]?'(.+)'/;
-const REGEX_INPUTS = /@Input\((.+)?\) (public )?(private )?(.[^ ]+)(:| :)[ ]?(string|number|boolean|String|Number|Boolean)[;]?/;
-const REGEX_INPUTS_GLOBAL = /@Input\((.+)?\) (public )?(private )?(.[^ ]+)(:| :)[ ]?(string|number|boolean|String|Number|Boolean)[;]?/g;
-const REGEX_INPUTS_UNION_GLOBAL = /@Input\((.+)?\) (public )?(private )?(.[^ :]+)(:| :)?[ ]?(([ ]?[|]?[ ]?'.[^ ]+'[ ]?[;]?)+)+/g;
-const REGEX_INPUTS_NAME = /@Input\((.+)?\) (public )?(private )?(.[^ ]+)(:| :)/;
-const REGEX_INPUTS_UNION = /'(.[^ ]+)'/g;
+// Utils
+import { REGEX_CLASSNAME, 
+    REGEX_INPUTS, 
+    REGEX_INPUTS_GLOBAL, 
+    REGEX_INPUTS_NAME, 
+    REGEX_INPUTS_UNION, 
+    REGEX_INPUTS_UNION_GLOBAL, 
+    REGEX_SELECTOR } from "./regex";
 
 export function getClassName(data: string): string {
     const matches = data.match(REGEX_CLASSNAME);
