@@ -24,5 +24,16 @@
     type="number" />
 </ng-container>
 
+<ng-container *ngFor="let componentPropsUnionItem of componentPropsUnion">
+  <h2>PROP: {{ componentPropsUnionItem.key }}</h2>
+  <select [(ngModel)]="componentProps[componentPropsUnionItem.key]" (ngModelChange)="changePropUnion($event, componentPropsUnionItem.key)">
+    <option 
+      *ngFor="let componentPropsUnionValue of componentPropsUnionItem.values" 
+      [attr.value]="componentPropsUnionValue"
+    >
+      {{ componentPropsUnionValue }}
+  </option>
+  </select>
+</ng-container>
 
 <router-outlet></router-outlet>

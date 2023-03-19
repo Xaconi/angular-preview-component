@@ -17,7 +17,7 @@ export class WebviewPanel implements vscode.WebviewPanelSerializer {
 	private static readonly angularBuildFolder: string = 'out';
 	private _componentTask?: Component;
 	
-	private _webviewPanel: vscode.WebviewPanel;
+	private _webviewPanel?: vscode.WebviewPanel;
 	private _context: vscode.ExtensionContext
 	private _buildTaskSuscription: vscode.EventEmitter<void>;
 	private _document: vscode.TextDocument;
@@ -92,7 +92,6 @@ export class WebviewPanel implements vscode.WebviewPanelSerializer {
 	private _setWebviewListeners(): void {
 		const changeDocumentSubscription = vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
 			if (document.uri.toString() === this._document.uri.toString()) {
-				// @TODO Loading HTML
 				vscode.commands.executeCommand('angularpreview.updateAngular');
 			}
 		});

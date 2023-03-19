@@ -4,7 +4,7 @@ import * as fs from 'fs';
 
 // Utils
 import { infoMessage, replaceLine } from '../utils/utils';
-import { getClassName, getInputs, getInputsProps, getInputsPropsValues, getInputsString, getSelector } from '../utils/file';
+import { getClassName, getInputs, getInputsProps, getInputsPropsTypes, getInputsPropsValues, getInputsString, getSelector } from '../utils/file';
 
 // Modles
 import InputData from '../models/inputData';
@@ -13,8 +13,10 @@ export default class Component {
     private static readonly importHook = '/* @APComponentImport */';
 	private static readonly declarationHook = '/* @APComponentDeclaration */';
 	private static readonly propsHook = '/* @APComponentProps */';
+	private static readonly propsTypesHook = '/* @APComponentPropsTypes */';
 	private static readonly htmlHook = '<!-- @APComponentHTML -->';
 	private static readonly componentVar = 'componentProps';
+	private static readonly componentVarTypes = 'componentPropsTypes';
 
     private static buildTaskSuscription: vscode.EventEmitter<void>;
     private static context: vscode.ExtensionContext;
@@ -89,7 +91,9 @@ export default class Component {
 		let appComponentText = fs.readFileSync(this._appComponentTSFilePath).toString();
 		const componentInputsProps: string = getInputsProps(componentInputs);
 		const componentInputsPropsValues: string = getInputsPropsValues(componentInputs);
+		const componentInputsPropsTypes: string = getInputsPropsTypes(componentInputs);
 		appComponentText = replaceLine(appComponentText, Component.propsHook, `${Component.propsHook} public ${Component.componentVar}: {${componentInputsProps}} = {${componentInputsPropsValues}};`);
+		appComponentText = replaceLine(appComponentText, Component.propsTypesHook, `${Component.propsTypesHook} public ${Component.componentVarTypes} = ${componentInputsPropsTypes};`);
 		fs.writeFileSync(this._appComponentTSFilePath, appComponentText);
 	}
 
@@ -113,6 +117,7 @@ export default class Component {
 
 		let appComponentTsText: string = fs.readFileSync(this._appComponentTSFilePath).toString();
 		appComponentTsText = replaceLine(appComponentTsText, Component.propsHook, `${Component.propsHook} public ${Component.componentVar};`);
+		appComponentTsText = replaceLine(appComponentTsText, Component.propsTypesHook, `${Component.propsTypesHook} public ${Component.componentVarTypes};`);
 		fs.writeFileSync(this._appComponentTSFilePath, appComponentTsText);
 	}
 	

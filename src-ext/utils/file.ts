@@ -6,6 +6,9 @@ const REGEX_CLASSNAME = /export class ([a-zA-Z]+)/;
 const REGEX_SELECTOR = /selector:[ ]?'(.+)'/;
 const REGEX_INPUTS = /@Input\((.+)?\) (public )?(private )?(.[^ ]+)(:| :)[ ]?(string|number|boolean|String|Number|Boolean)[;]?/;
 const REGEX_INPUTS_GLOBAL = /@Input\((.+)?\) (public )?(private )?(.[^ ]+)(:| :)[ ]?(string|number|boolean|String|Number|Boolean)[;]?/g;
+const REGEX_INPUTS_UNION_GLOBAL = /@Input\((.+)?\) (public )?(private )?(.[^ :]+)(:| :)?[ ]?(([ ]?[|]?[ ]?'.[^ ]+'[ ]?[;]?)+)+/g;
+const REGEX_INPUTS_NAME = /@Input\((.+)?\) (public )?(private )?(.[^ ]+)(:| :)/;
+const REGEX_INPUTS_UNION = /'(.[^ ]+)'/g;
 
 export function getClassName(data: string): string {
     const matches = data.match(REGEX_CLASSNAME);
@@ -20,11 +23,20 @@ export function getSelector(data: string): string {
 }
 
 export function getInputs(data: string): Array<InputData> {
+    // Primitives
     const matches = data.match(REGEX_INPUTS_GLOBAL);
     const inputs: Array<InputData> = []; 
     matches?.forEach(match => {
         const matchesInput = match.match(REGEX_INPUTS);
         if(matchesInput) inputs.push({ name: matchesInput[4], type: matchesInput[6] });
+    });
+
+    // Union
+    const matchesUnion = data.match(REGEX_INPUTS_UNION_GLOBAL);
+    matchesUnion?.forEach(match => {
+        const matchesInputName = match.match(REGEX_INPUTS_NAME);
+        const matchesInputUnion = match.match(REGEX_INPUTS_UNION).map(matchUnionItem => matchUnionItem.replaceAll("'", ""));
+        if(matchesInputUnion) inputs.push({ name: matchesInputName[4], type: matchesInputUnion.join(' | ') });
     });
     return inputs;
 }
@@ -49,6 +61,8 @@ export function getInputsProps(componentInputs: Array<InputData>): string {
                 componentInputsProps.push(`${componentInputsProp.name}?: ${componentInputsProp.type}${comma}`);
                 break;
             default:
+                if(index === (componentInputs.length - 1)) comma = "";
+                componentInputsProps.push(`${componentInputsProp.name}?: any${comma}`);
                 break;
         }
     });
@@ -73,8 +87,39 @@ export function getInputsPropsValues(componentInputs: Array<InputData>): string 
                 componentInputsProps.push(`${componentInputsProp.name}: false,`);
                 break;
             default:
+                // Union types
+                componentInputsProps.push(`${componentInputsProp.name}: null,`);
                 break;
         }
     });
     return componentInputsProps.join('');
+}
+
+export function getInputsPropsTypes(componentInputs: Array<InputData>): string {
+    const componentInputsPropsTypes: Array<{ key: string, type: string }> = [];
+    componentInputs.forEach((componentInputsProp: InputData, index: number) => {
+        switch(componentInputsProp.type) {
+            case 'string':
+            case 'String':
+                componentInputsPropsTypes.push({ key: componentInputsProp.name, type: 'string' });
+                break;
+            case 'number':
+            case 'Number':
+                componentInputsPropsTypes.push({ key: componentInputsProp.name, type: 'number' });
+                break;
+            case 'Boolean':
+            case 'boolean':
+                componentInputsPropsTypes.push({ key: componentInputsProp.name, type: 'boolean' });
+                break;
+            default:
+                // Union types
+                componentInputsPropsTypes.push({ key: componentInputsProp.name, type: `${componentInputsProp.type}` });
+                break;
+        }
+    });
+    let componentInputsPropsTypesString: string = '';
+    componentInputsPropsTypes.forEach(componentInputsPropsTypesItem => {
+        componentInputsPropsTypesString += JSON.stringify(componentInputsPropsTypesItem) + ",";
+    })
+    return `[${componentInputsPropsTypesString}]`;
 }
