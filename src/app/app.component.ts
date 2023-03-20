@@ -10,6 +10,7 @@ export class AppComponent implements OnInit{
   public componentPropsBoolean: Array<string> = [];
   public componentPropsNumber: Array<string> = [];
   public componentPropsUnion: Array<{ key: string, values: Array<string> }> = [];
+  public componentPropsObject: Array<string> = [];
 
 /* @APComponentPropsTypes */ public componentPropsTypes;
 /* @APComponentProps */ public componentProps;
@@ -20,6 +21,7 @@ export class AppComponent implements OnInit{
       else if(this.hasType(['boolean', 'Boolean'], this.componentProps[key])) this.componentPropsBoolean.push(key);
       else if(this.hasType(['number', 'Number'], this.componentProps[key])) this.componentPropsNumber.push(key);
       else if(this.hasUnionTypes(key)) this.componentPropsUnion.push({ key, values: this.getUnionTypes(key)});
+      else if(this.hasType(['object'], this.componentProps[key])) this.componentPropsObject.push(key);
     })
   }
 
@@ -38,6 +40,10 @@ export class AppComponent implements OnInit{
 
   public changePropUnion(value: any, componentUnionKey: string): void {
     this.componentProps[componentUnionKey] = value;
+  }
+
+  public changePropObject(event: any, componentObjectKey: string): void {
+    this.componentProps[componentObjectKey] = JSON.parse(event.target.value);
   }
 
   public hasType(types: Array<string>, value: any): boolean {

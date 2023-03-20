@@ -36,4 +36,9 @@
   </select>
 </ng-container>
 
+<ng-container *ngFor="let componentPropsObjectKey of componentPropsObject">
+  <h2>PROP: {{ componentPropsObjectKey }}</h2>
+  <textarea (input)="changePropObject($event, componentPropsObjectKey)"></textarea>
+</ng-container>
+
 <router-outlet></router-outlet>
