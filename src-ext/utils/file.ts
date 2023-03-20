@@ -2,13 +2,13 @@
 import InputData from "../models/inputData";
 
 // Utils
-import { REGEX_CLASSNAME, 
-    REGEX_INPUTS, 
-    REGEX_INPUTS_GLOBAL, 
+import { REGEX_CLASSNAME,
     REGEX_INPUTS_NAME, 
-    REGEX_INPUTS_UNION, 
-    REGEX_INPUTS_UNION_GLOBAL, 
+    REGEX_INPUTS_TESTS, 
+    REGEX_INPUTS_TESTS_GLOBAL, 
+    REGEX_INPUTS_UNION,
     REGEX_SELECTOR } from "./regex";
+import { isPrimitiveType, isUnionType } from "./types";
 
 export function getClassName(data: string): string {
     const matches = data.match(REGEX_CLASSNAME);
@@ -24,19 +24,21 @@ export function getSelector(data: string): string {
 
 export function getInputs(data: string): Array<InputData> {
     // Primitives
-    const matches = data.match(REGEX_INPUTS_GLOBAL);
+    const matches = data.match(REGEX_INPUTS_TESTS_GLOBAL);
     const inputs: Array<InputData> = []; 
     matches?.forEach(match => {
-        const matchesInput = match.match(REGEX_INPUTS);
-        if(matchesInput) inputs.push({ name: matchesInput[4], type: matchesInput[6] });
-    });
-
-    // Union
-    const matchesUnion = data.match(REGEX_INPUTS_UNION_GLOBAL);
-    matchesUnion?.forEach(match => {
-        const matchesInputName = match.match(REGEX_INPUTS_NAME);
-        const matchesInputUnion = match.match(REGEX_INPUTS_UNION).map(matchUnionItem => matchUnionItem.replaceAll("'", ""));
-        if(matchesInputUnion) inputs.push({ name: matchesInputName[4], type: matchesInputUnion.join(' | ') });
+        const matchesInput = match.match(REGEX_INPUTS_TESTS);
+        const inputType = matchesInput[6];
+        if(isPrimitiveType(inputType)) inputs.push({ name: matchesInput[4], type: matchesInput[6] });
+        else if(isUnionType(inputType)) {
+            const matchesInputName = match.match(REGEX_INPUTS_NAME);
+            const matchesInputUnion = match.match(REGEX_INPUTS_UNION).map(matchUnionItem => matchUnionItem.replaceAll("'", ""));
+            inputs.push({ name: matchesInputName[4], type: matchesInputUnion.join(' | ') });
+        }
+        else {
+            // Custom object
+            inputs.push({ name: matchesInput[4], type: 'any' });
+        }
     });
     return inputs;
 }
@@ -57,6 +59,7 @@ export function getInputsProps(componentInputs: Array<InputData>): string {
             case 'Number':
             case 'Boolean':
             case 'boolean':
+            case 'any':
                 if(index === (componentInputs.length - 1)) comma = "";
                 componentInputsProps.push(`${componentInputsProp.name}?: ${componentInputsProp.type}${comma}`);
                 break;
@@ -86,6 +89,9 @@ export function getInputsPropsValues(componentInputs: Array<InputData>): string 
             case 'boolean':
                 componentInputsProps.push(`${componentInputsProp.name}: false,`);
                 break;
+            case 'any':
+                componentInputsProps.push(`${componentInputsProp.name}: {},`);
+                break;
             default:
                 // Union types
                 componentInputsProps.push(`${componentInputsProp.name}: null,`);
@@ -110,6 +116,9 @@ export function getInputsPropsTypes(componentInputs: Array<InputData>): string {
             case 'Boolean':
             case 'boolean':
                 componentInputsPropsTypes.push({ key: componentInputsProp.name, type: 'boolean' });
+                break;
+            case 'any':
+                componentInputsPropsTypes.push({ key: componentInputsProp.name, type: 'any' });
                 break;
             default:
                 // Union types

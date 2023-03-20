@@ -106,6 +106,7 @@ export default class Component {
 	}
 
 	private _resetFiles(): void {
+		return;
 		let appModuleText: string = fs.readFileSync(this._appModuleFilePath).toString();
 		appModuleText = replaceLine(appModuleText, Component.importHook, Component.importHook);
 		appModuleText = replaceLine(appModuleText, Component.declarationHook, Component.declarationHook);

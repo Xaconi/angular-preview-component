@@ -5,3 +5,5 @@ export const REGEX_INPUTS_GLOBAL = /@Input\((.+)?\) (public )?(private )?(.[^ ]+
 export const REGEX_INPUTS_UNION_GLOBAL = /@Input\((.+)?\) (public )?(private )?(.[^ :]+)(:| :)?[ ]?(([ ]?[|]?[ ]?'.[^ ]+'[ ]?[;]?)+)+/g;
 export const REGEX_INPUTS_NAME = /@Input\((.+)?\) (public )?(private )?(.[^ ]+)(:| :)/;
 export const REGEX_INPUTS_UNION = /'(.[^ ]+)'/g;
+export const REGEX_INPUTS_TESTS_GLOBAL = /@Input\((.+)?\) (public )?(private )?(.[^ ]+)(:| :)[ ](.+)[;]/g;
+export const REGEX_INPUTS_TESTS = /@Input\((.+)?\) (public )?(private )?(.[^ ]+)(:| :)[ ](.+)[;]/;
